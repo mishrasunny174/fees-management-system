@@ -1,17 +1,18 @@
 /**
  *  this program is a simple fees management system
  *  designed for a school project
- *  @author
  *  source code is available freely
  *  at https://github.com/mishrasunny174/fees-management-system
+ *  @author Sunny Mishra
  */
 
 #include <iostream> //for basic stdin and stdout founctions
 #include <string.h> //for stcpy() and strcat()
-#include <stdlib.h> //for atoi()
+#include <stdlib.h> //for atoi() and system()
 #include <stdio.h> //for rename() and remove()
 #include <fstream> //for streaming files
 #include <iomanip> //for setw() and setfill()
+#include <ctime> //for time related things
 
 using namespace std;
 
@@ -27,6 +28,7 @@ class Student //class student fro students
 public:
     void add(); //function prototype for adding student
     int getRollNo() { return rollNo; } //getter function to get roll number
+    char* getName() { return name; } //getter function to get name
     void display(); //function prototype to display details of student
 };
 
@@ -60,60 +62,92 @@ void Student::display() //display function for Student class
 class Fees : public Student
 {
     float monthlyFees;
-    short nOfMonthsPaid;
-    short nOfMonthsRem;
+    bool feeStatus;
+    char date[40];
 public:
+    Fees(){}
+    Fees(int clas);
     void display(); //function to display fees status
-    void payFees(int nOfMonths);
+    void setDate(char* temp)
+    {
+        strcpy(date,temp);
+    }
+    void payFees();
     void add();
-    float getmonthlyFees()
+    float getMonthlyFees()
     {
         return monthlyFees;
     }
-    short getNOfMonthsRem()
+    bool isFeesPaid()
     {
-        return nOfMonthsRem;
+        return feeStatus;
+    }
+    char* getDate()
+    {
+        return date;
     }
 };
 
-void Fees::add() //add function for Student class
+Fees::Fees(int clas) //add function for Student class
 {
-    Student::add(); //calling student add function to add details of student first
-    cout<<"Enter monthly Fees: ";
-    cin>>monthlyFees;
-    nOfMonthsPaid=0; //assigning fees of paid months to be 0
-    nOfMonthsRem=12; //assigning fees rem months to be 12
-}
-
-
-void Fees::payFees(int nOfMonths)
-{
-    nOfMonthsPaid+=nOfMonths;
-    nOfMonthsRem-=nOfMonths;
+    Student::add(); //calling student add function
+    if(clas<=5)
+        monthlyFees=550;
+    else if(clas<=10)
+        monthlyFees=750;
+    else if(clas==11)
+        monthlyFees=1100;
+    else
+        monthlyFees=1600;
+    feeStatus=false;
 }
 
 void Fees::display()
 {
     Student::display();
     cout<<"\n### FEES STATUS ###"<<endl;
-    cout<<"No of Months ( fees not paid ): "<<nOfMonthsRem<<endl;
     cout<<"Monthly Fees: "<<monthlyFees<<endl;
-    cout<<"No of months ( paid ): "<<nOfMonthsPaid<<endl;
+    cout<<"Fee Status: ";
+    if(feeStatus)
+    {
+        cout<<"paid"<<endl;
+        cout<<"payment date: "<<date<<endl;
+    }
+    else
+        cout<<"unpaid"<<endl;
+}
+
+void Fees::payFees()
+{
+    time_t rawtime;
+    time(&rawtime);
+    feeStatus=true;
+    strcpy(date,ctime(&rawtime));
 }
 
 /*----------------------------class definition ends-------------------------------*/
 
 /*----------------------------function prototypes starts--------------------------*/
 
-void searchStudent(char* clas);//function to search student and display their status
-long fileSearch(char* fileName,int rollNo);//function to perform real search in file
+void searchStudent(char*);//function to search student and display their status
+long fileSearch(char*,int);//function to perform search using roll no
+long fileSearch(char*,char*); //function to perform search using name
 void pause(); //function to pause the program
-void getClass(char *clas); //function to input class
-void payFees(char *clas); //function to pay fees
-void listPaid(char *clas); //function to list all students (fees paid) of a class
-void listUnpaid(char* clas); //function to list students (fees unpaid) of a class
-void registerStudent(char* clas); //function to add student to data base
-void delStudent(char *clas); //function to delete a student from database
+void getFileName(char*); //function to assemble filename
+void payFees(char*,bool); //function to pay fees
+void listPaid(char*); //function to list all students (fees paid) of a class
+void listUnpaid(char*); //function to list students (fees unpaid) of a class
+void addStudent(char*); //function to add student to data base
+void delStudent(char*); //function to delete a student from database
+void browseDatabase(); //function to view database
+void manageStudents(); //function to manage students in database
+void summarize(char*); //to create summary of total fees paid and unpaid
+void fileError(); //function to show file error message
+void studentNotFoundError();// function to show student not found error
+void getMonth(char*); //function to input correct month
+void getClas(char*); //function to input correct class
+void banner(); //function to show program banner
+void paymentportal(); //sub menu for payment function
 
 /*----------------------------function prototypes ends----------------------------*/
 
@@ -122,21 +156,14 @@ void delStudent(char *clas); //function to delete a student from database
 int main()
 {
     int choice;
-    char clas[3]; //i will convert it to int to compare
     while(1) //infinity main menu loop exit via break statement
     {
-home: //home point
-        system("clear");
-        cout<<"############  T. I. C.  ############"<<endl;
-        cout<<"###### FEES MANAGEMENT SYSTEM ######"<<endl<<endl;
-        cout<<"1- Search Student to see fee status"<<endl;
-        cout<<"2- Pay Fees of a student"<<endl;
-        cout<<"3- List all students(Fees incomplete)"<<endl;
-        cout<<"4- List all students(Fees fully paid)"<<endl;
-        cout<<"5- Register student to database "<<endl;
-        cout<<"6- Delete student from database "<<endl;
+        banner();
+        cout<<"1- Payment portal"<<endl;
+        cout<<"2- Browse Database"<<endl;
+        cout<<"3- Manage Database"<<endl;
         cout<<"Enter 0 to exit..."<<endl<<endl;
-        cout<<"Enter choice: ";
+        cout<<"Enter your choice: ";
         cin>>choice;
         switch(choice)
         {
@@ -144,40 +171,24 @@ home: //home point
             exit(1);
             break;
         case 1:
-            getClass(clas);
-            searchStudent(clas);
-                cout<<"wrong choice"<<endl;
+            paymentportal(); //sub menu for payment
             break;
         case 2:
-            getClass(clas);
-            payFees(clas);
+            browseDatabase(); //sub menu for browsing database
             break;
         case 3:
-            getClass(clas);
-            listUnpaid(clas);
-            break;
-        case 4:
-            getClass(clas);
-            listPaid(clas);
-            break;
-        case 5:
-            getClass(clas);
-            registerStudent(clas);
-            break;
-        case 6:
-            getClass(clas);
-            delStudent(clas);
+            manageStudents(); //sub menu for managing students
             break;
         default:
             cout<<"Error wrong choice try again..."<<endl;
             pause();
-            goto home;
         }
     }
 }
 
 /*----------------------------main function ends----------------------------------*/
 
+/*----------------------------function definition starts--------------------------*/
 void pause()
 {
     cout<<"Press enter to continue...";
@@ -185,7 +196,49 @@ void pause()
     cin.get();
 }
 
-void getClass(char* clas)
+void banner()
+{
+    system("clear"); //change it to cls to make it work in windows
+    cout<<"############  T. I. C.  ############"<<endl;
+    cout<<"###### FEES MANAGEMENT SYSTEM ######"<<endl<<endl;
+    time_t rawTime; // time is a alias for storing time
+    time(&rawTime); //getting no of seconds till unix standard time stamp
+    tm *local; //declaring a pointer of struct type tm
+    local = localtime(&rawTime); //converting rawtime to tm structure
+    cout<<"Date: "<<local->tm_mday<<'/'<<local->tm_mon+1; //now the program will
+    cout<<'/'<<1900+local->tm_year<<endl<<endl; //show current system date
+}
+void fileError()
+{
+    cout<<"ERROR while opening database!!!"<<endl;
+    cout<<"Check whether database is created or not!!!"<<endl;
+    cout<<"Otherwise contact sys admin"<<endl;
+}
+
+void studentNotFoundError()
+{
+    cout<<"Student not found in database check roll no and try again"<<endl;
+    cout<<"Also make sure you added the student to database first"<<endl;
+    cout<<"If still error persist contact sys admin"<<endl;
+}
+
+void getMonth(char* month)
+{
+    while(1)
+    {
+        cout<<"Enter month ( 1 to 12 ): ";
+        cin>>month;
+        if(!(atoi(month)<=12&&atoi(month)>=1))
+        {
+            cout<<"ERROR wrong input try again..."<<endl;
+            pause();
+        }
+        else
+            break;
+    }
+}
+
+void getClas(char* clas)
 {
     while(1)
     {
@@ -193,12 +246,19 @@ void getClass(char* clas)
         cin>>clas;
         if(!(atoi(clas)<=12&&atoi(clas)>=1))
         {
-            cout<<"ERROR wrong input try again...";
+            cout<<"ERROR wrong input try again..."<<endl;
             pause();
         }
         else
             break;
     }
+}
+void getFileName(char* fileName,char* month,char* clas)
+{
+    strcpy(fileName,"database/");
+    strcat(fileName,month);
+    strcat(fileName,clas);
+    strcat(fileName,".dat");
 }
 
 long fileSearch(char* fileName,int rollNo)
@@ -208,11 +268,10 @@ long fileSearch(char* fileName,int rollNo)
     ifstream file(fileName,ios::in|ios::binary);
     if(!file)
     {
-        cout<<"ERROR while opening file!!!\nCheck whether database is created or not!!!"<<endl;
-        cout<<"Otherwise contact sys admin"<<endl;
+        fileError();
         pause();
-        exit(2);
     }
+
     else
     {
         file.seekg(ios::beg);
@@ -227,103 +286,128 @@ long fileSearch(char* fileName,int rollNo)
     return -1;
 }
 
-void searchStudent(char* clas)
+long fileSearch(char* fileName,char* name)
 {
-    system("clear");
+    Fees temp;
+    long location;
+    ifstream file(fileName,ios::in|ios::binary);
+    if(!file)
+    {
+        fileError();
+        pause();
+    }
+
+    else
+    {
+        file.seekg(ios::beg);
+        location=file.tellg();
+        while(file.read((char*)&temp,sizeof(Fees)))
+        {
+            if(strcmp(temp.getName(),name)==0)
+                return location;
+            location=file.tellg();
+        }
+    }
+    return -1;
+}
+
+void searchStudent(char* fileName)
+{
+    banner();
     int rollNo;
     ifstream file;
     Fees temp;
-    cout<<"Enter roll no: ";
-    cin>>rollNo;
-    char fileName[10];
     long location=-1;
-    strcpy(fileName,clas);
-    strcat(fileName,".dat");
-    location=fileSearch(fileName,rollNo);
-    if (!(location==-1))
+    file.open(fileName,ios::in|ios::binary);
+    if(file)
     {
-        file.open(fileName,ios::in|ios::binary);
-        if(file)
+        cout<<"Enter roll no: ";
+        cin>>rollNo;
+        location=fileSearch(fileName,rollNo);
+        if(location!=-1)
         {
             file.seekg(location);
             file.read((char*)&temp,sizeof(Fees));
             temp.display();
         }
-        pause();
+        else
+            studentNotFoundError();
+        file.close();
     }
     else
-    {
-        cout<<"Student not found in database"<<endl;
-        pause();
-    }
+        fileError();
+    pause();
 }
 
-void payFees(char* clas)
+void payFees(char* fileName,bool searchByName)
 {
-    system("clear");
+    banner();
     Fees temp;
     fstream file;
     int rollNo;
-    int nOfMonths;
     char choice;
-    cout<<"Enter roll no: ";
-    cin>>rollNo;
-    char fileName[10];
+    char name[25];
     long location=-1;
-    strcpy(fileName,clas);
-    strcat(fileName,".dat");
-    location=fileSearch(fileName,rollNo);
-    if (!(location==-1))
+    file.open(fileName,ios::in|ios::binary|ios::out);
+    if (file)
     {
-        file.open(fileName,ios::in|ios::binary|ios::out);
-        file.seekg(location);
-        if(file.read((char*)&temp,sizeof(Fees)))
+        if(!searchByName)
         {
+            cout<<"Enter roll no: ";
+            cin>>rollNo;
+            location=fileSearch(fileName,rollNo);
+        }
+        else
+        {
+            cout<<"Enter name: ";
+            cin.ignore();
+            cin.getline(name,25);
+            location=fileSearch(fileName,name);
+        }
+        if(location!=-1)
+        {
+            file.seekg(location);
+            file.read((char*)&temp,sizeof(Fees));
+            banner();
             temp.display();
-            cout<<"Enter no of months to pay: ";
-            cin>>nOfMonths;
-            if(nOfMonths<=temp.getNOfMonthsRem())
+            if(!temp.isFeesPaid())
             {
-                cout<<"Amount to pay: "<<temp.getmonthlyFees()*nOfMonths<<endl;
-                cout<<"update database (y/n): ";
+                cout<<"Amount to submit: "<<temp.getMonthlyFees()<<endl;
+                cout<<"pay amount (y/n): ";
                 cin.ignore();
                 cin.get(choice);
-                if(choice=='y')
+                if(choice=='y'||choice=='Y')
                 {
-                    temp.payFees(nOfMonths);
+                    temp.payFees();
                     file.seekp(location);
-                    if(file.write((char*)&temp,sizeof(Fees)))
-                        cout<<"wrote to database successfully"<<endl;
+                    file.write((char*)&temp,sizeof(Fees));
+                    cout<<"database updated successfully"<<endl;
                 }
                 else
                     cout<<"exiting to main menu"<<endl;
             }
             else
-                cout<<"sir you are overpaying..."<<endl;
-            file.close();
-            pause();
+                cout<<"fees already paid..."<<endl;
         }
+        else
+            studentNotFoundError();
+        file.close();
     }
     else
-    {
-        cout<<"Student not found in database"<<endl;
-        pause();
-    }
+        fileError();
+    pause();
 }
 
-void listPaid(char *clas)
+void listPaid(char *fileName)
 {
-    system("clear");
-    char fileName[10];
-    strcpy(fileName,clas);
-    strcat(fileName,".dat");
+    banner();
     Fees temp;
     ifstream file(fileName,ios::in|ios::binary);
     if(file)
     {
         while(file.read((char*)&temp,sizeof(Fees)))
         {
-            if(temp.getNOfMonthsRem()==0)
+            if(temp.isFeesPaid())
             {
                 cout<<setw(36)<<setfill('-')<<"-"<<endl;
                 temp.display();
@@ -333,23 +417,20 @@ void listPaid(char *clas)
         }
     }
     else
-        cout<<"ERROR while opening database contact sys admin"<<endl;
+        fileError();
     pause();
 }
 
-void listUnpaid(char *clas)
+void listUnpaid(char *fileName)
 {
-    system("clear");
-    char fileName[10];
-    strcpy(fileName,clas);
-    strcat(fileName,".dat");
+    banner();
     Fees temp;
     ifstream file(fileName,ios::in|ios::binary);
     if(file)
     {
         while(file.read((char*)&temp,sizeof(Fees)))
         {
-            if(temp.getNOfMonthsRem()!=0)
+            if(!temp.isFeesPaid())
             {
                 cout<<setw(36)<<setfill('-')<<"-"<<endl;
                 temp.display();
@@ -359,49 +440,44 @@ void listUnpaid(char *clas)
         }
     }
     else
-        cout<<"ERROR while opening database contact sys admin"<<endl;
+        fileError();
     pause();
 }
 
-void registerStudent(char *clas)
+void addStudent(char *fileName,char* clas)
 {
-    system("clear");
-    char fileName[10];
+    banner();
     char choice;
-    strcpy(fileName,clas);
-    strcat(fileName,".dat");
-    Fees temp;
-    temp.add();
+    Fees temp(atoi(clas));
     ofstream file(fileName,ios::out|ios::binary|ios::app);
     if(file)
     {
-        cout<<"Sure to write details to database (y/n): ";
+        cout<<"Sure to submit details to database (y/n): ";
         cin.ignore();
         cin.get(choice);
         if(choice=='y'||choice=='Y')
         {
-            if(file.write((char*)&temp,sizeof(Fees)))
-                cout<<"data written successfully"<<endl;
+            file.write((char*)&temp,sizeof(Fees));
+                cout<<"database updated successfully"<<endl;
         }
         else
             cout<<"exiting to main menu"<<endl;
-        pause();
     }
+    else
+        fileError();
+    pause();
 }
 
-void delStudent(char *clas)
+void delStudent(char *fileName)
 {
-    system("clear");
-    char fileName[10];
+    banner();
     int rollNo;
     char choice;
     cout<<"Enter roll no: ";
     cin>>rollNo;
-    strcpy(fileName,clas);
-    strcat(fileName,".dat");
     Fees temp;
     ifstream file(fileName,ios::in|ios::binary);
-    ofstream tempFile("temp.dat",ios::binary|ios::out|ios::trunc);
+    ofstream tempFile("database/temp.dat",ios::binary|ios::out|ios::trunc);
     if(file&&tempFile)
     {
         while(file.read((char*)&temp,sizeof(Fees)))
@@ -416,6 +492,7 @@ void delStudent(char *clas)
                 else
                 {
                     cout<<"Exiting to main menu..."<<endl;
+                    remove("database/temp.dat");
                     break;
                 }
             }
@@ -424,11 +501,177 @@ void delStudent(char *clas)
         file.close();
         tempFile.close();
         remove(fileName);
-        rename("temp.dat",fileName);
+        rename("database/temp.dat",fileName);
         cout<<"Record deleted successfully"<<endl;
 
     }
     else
-        cout<<"ERROR while opening database contact sys admin"<<endl;
+        fileError();
     pause();
 }
+
+void browseDatabase()
+{
+    int choice;
+    banner();
+    char month[3];
+    char clas[3];
+    char fileName[30];
+    getMonth(month);
+    getClas(clas);
+    getFileName(fileName,month,clas);
+    while(1)
+    {
+        banner();
+        cout<<"######### Database Browser #########"<<endl;
+        cout<<"Class: "<<clas<<"\t\tMonth: "<<month<<endl<<endl;
+        cout<<"1- Search student in database"<<endl;
+        cout<<"2- List students(fees paid)"<<endl;
+        cout<<"3- List students(fees not paid)"<<endl;
+        cout<<"4- Summary of collected fees"<<endl;
+        cout<<"5- Return to main menu "<<endl;
+        cout<<"Enter 0 to exit..."<<endl;
+        cout<<"Enter your choice: ";
+        cin>>choice;
+        switch(choice)
+        {
+        case 0:
+            pause();
+            exit(1);
+        case 1:
+            searchStudent(fileName);
+            break;
+        case 2:
+            listPaid(fileName);
+            break;
+        case 3:
+            listUnpaid(fileName);
+            break;
+        case 4:
+            summarize(fileName);
+            break;
+        case 5:
+            goto mainMenu;
+            break;
+        default:
+            cout<<"Error wrong choice try again..."<<endl;
+            pause();
+        }
+    }
+mainMenu:
+    pause();
+}
+
+void manageStudents()
+{
+    int choice;
+    banner();
+    char month[3];
+    char clas[3];
+    char fileName[30];
+    getMonth(month);
+    getClas(clas);
+    getFileName(fileName,month,clas);
+    while(1)
+    {
+        banner();
+        cout<<"######## Database Management ########"<<endl;
+        cout<<"Class: "<<clas<<"\t\tMonth: "<<month<<endl<<endl;
+        cout<<"1- Add student in database"<<endl;
+        cout<<"2- Delete student from database"<<endl;
+        cout<<"3- Return to Main Menu"<<endl;
+        cout<<"Enter 0 to exit..."<<endl<<endl;
+        cout<<"Enter your choice: ";
+        cin>>choice;
+        switch(choice)
+        {
+        case 0:
+            pause();
+            exit(1);
+        case 1:
+            addStudent(fileName,clas);
+            break;
+        case 2:
+            delStudent(fileName);
+            break;
+        case 3:
+            goto mainMenu;
+            break;
+        default:
+            cout<<"Error wrong choice try again..."<<endl;
+            pause();
+        }
+    }
+mainMenu:
+    pause();
+}
+
+void summarize(char* fileName)
+{
+    banner();
+    int countPaid=0;
+    int countUnpaid=0;
+    Fees temp;
+    ifstream file(fileName,ios::in|ios::binary);
+    if(file)
+    {
+        while(file.read((char*)&temp,sizeof(Fees))) //counting number of
+        {                                           //paid and unpaid
+            if(temp.isFeesPaid())                   //students
+                countPaid++;
+            else
+                countUnpaid++;
+        }
+        cout<<"No of students (fees paid): "<<countPaid<<endl;
+        cout<<"No of students (fees unpaid): "<<countUnpaid<<endl;
+        cout<<"Total amount collected: "<<countPaid*temp.getMonthlyFees()<<endl;
+    }
+    else
+        fileError();
+    pause();
+}
+
+void paymentportal()
+{
+    banner();
+    char month[3];
+    char clas[3];
+    char fileName[30];
+    getMonth(month);
+    getClas(clas);
+    getFileName(fileName,month,clas);
+    int choice;
+    while(1)
+    {
+        banner();
+        cout<<"########## Payment Portal ##########"<<endl;
+        cout<<"Class: "<<clas<<"\t\tMonth: "<<month<<endl<<endl;
+        cout<<"1- Pay fees by roll no"<<endl;
+        cout<<"2- Pay fees by name:"<<endl;
+        cout<<"3- Return to main menu"<<endl;
+        cout<<"Enter 0 to exit..."<<endl;
+        cout<<"Enter your choice: ";
+        cin>>choice;
+        switch(choice)
+        {
+        case 0:
+            pause();
+            exit(2);
+        case 1:
+            payFees(fileName,false);
+            break;
+        case 2:
+            payFees(fileName,true);
+            break;
+        case 3:
+            goto mainMenu;
+            break;
+        default:
+            cout<<"Error wrong choice try again..."<<endl;
+            pause();
+        }
+    }
+mainMenu:
+    pause();
+}
+/*----------------------------function definition ends----------------------------*/
