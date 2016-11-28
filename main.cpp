@@ -2,7 +2,7 @@
  *  this program is a simple fees management system
  *  designed for a school project
  *  source code is available freely
- *  at https://github.com/mishrasunny174/fees-management-system
+ *  under GNU Open Source License
  *  @author Sunny Mishra
  */
 
@@ -45,7 +45,7 @@ void Student::add() //add function for student class
     cin.ignore();
     cout<<"Enter Fathers name: ";
     cin.getline(fathersName,25);
-    cout<<"enter mobile no: ";
+    cout<<"Enter mobile no: ";
     cin>>mobNo;
 }
 
@@ -148,6 +148,7 @@ void getMonth(char*); //function to input correct month
 void getClas(char*); //function to input correct class
 void banner(); //function to show program banner
 void paymentportal(); //sub menu for payment function
+void showAll(char* ); //function to show all students
 
 /*----------------------------function prototypes ends----------------------------*/
 
@@ -219,7 +220,7 @@ void studentNotFoundError()
 {
     cout<<"Student not found in database check roll no and try again"<<endl;
     cout<<"Also make sure you added the student to database first"<<endl;
-    cout<<"If still error persist contact sys admin"<<endl;
+    cout<<"If error still persist contact sys admin"<<endl;
 }
 
 void getMonth(char* month)
@@ -579,7 +580,8 @@ void manageStudents()
         cout<<"Class: "<<clas<<"\t\tMonth: "<<month<<endl<<endl;
         cout<<"1- Add student in database"<<endl;
         cout<<"2- Delete student from database"<<endl;
-        cout<<"3- Return to Main Menu"<<endl;
+        cout<<"3- Show all students in database"<<endl;
+        cout<<"4- Return to Main Menu"<<endl;
         cout<<"Enter 0 to exit..."<<endl<<endl;
         cout<<"Enter your choice: ";
         cin>>choice;
@@ -595,6 +597,9 @@ void manageStudents()
             delStudent(fileName);
             break;
         case 3:
+            showAll(fileName);
+            break;
+        case 4:
             goto mainMenu;
             break;
         default:
@@ -672,6 +677,21 @@ void paymentportal()
         }
     }
 mainMenu:
+    pause();
+}
+
+void showAll(char* fileName)
+{
+    banner();
+    Fees temp;
+    fstream file(fileName,ios::in|ios::binary);
+    if(file)
+    {
+        while(file.read((char*)&temp,sizeof(Fees)))
+              temp.display();
+    }
+    else
+        fileError();
     pause();
 }
 /*----------------------------function definition ends----------------------------*/
