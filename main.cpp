@@ -535,7 +535,7 @@ void delStudent(char *fileName)
                 {
                     cout<<"Exiting to main menu..."<<endl;
                     remove("database/temp.dat");
-                    goto main;
+                    goto mainMenu;
                 }
             }
             tempFile.write((char*)&temp,sizeof(Fees));
@@ -549,7 +549,7 @@ void delStudent(char *fileName)
     }
     else
         fileError();
-main:
+mainMenu:
     pause();
 }
 
