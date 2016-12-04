@@ -23,13 +23,15 @@ class Student //class student fro students
     int rollNo; //variables are self explainable by there names
     long mobNo;
     int addmissionNo;
-    char name[25];
+    char name[20];
     char fathersName[25];
 public:
     void add(); //function prototype for adding student
     int getRollNo() { return rollNo; } //getter function to get roll number
     char* getName() { return name; } //getter function to get name
     void display(); //function prototype to display details of student
+    int getAdmNo() { return addmissionNo; }
+
 };
 
 void Student::add() //add function for student class
@@ -37,7 +39,7 @@ void Student::add() //add function for student class
     cout<<"### Student Registration ###"<<endl;
     cin.ignore();
     cout<<"Enter students name: ";
-    cin.getline(name,25);
+    cin.getline(name,20);
     cout<<"Enter roll no: ";
     cin>>rollNo;
     cout<<"Enter admission no: ";
@@ -63,11 +65,11 @@ class Fees : public Student
 {
     float monthlyFees;
     bool feeStatus;
-    char date[40];
+    char date[25];
 public:
     Fees(){}
     Fees(int clas);
-    void display(); //function to display fees status
+    void display(bool ); //function to display fees status
     void setDate(char* temp)
     {
         strcpy(date,temp);
@@ -100,21 +102,37 @@ Fees::Fees(int clas) //add function for Student class
     else
         monthlyFees=1600;
     feeStatus=false;
+    strcpy(date,"N/A");
 }
 
-void Fees::display()
+void Fees::display(bool all = false)
 {
-    Student::display();
-    cout<<"\n### FEES STATUS ###"<<endl;
-    cout<<"Monthly Fees: "<<monthlyFees<<endl;
-    cout<<"Fee Status: ";
-    if(feeStatus)
+    if(all)
     {
-        cout<<"paid"<<endl;
-        cout<<"payment date: "<<date<<endl;
+        cout<<setw(1)<<"|"<<setfill(' ')<<setw(6)<<left<<getAdmNo();
+        cout<<setw(1)<<"|"<<setw(8)<<left<<getRollNo();
+        cout<<setw(1)<<"|"<<setw(20)<<left<<getName();
+        if(feeStatus)
+            cout<<setw(1)<<"|"<<setw(10)<<left<<"PAID";
+        else
+            cout<<setw(1)<<"|"<<setw(10)<<left<<"DUE";
+        cout<<setw(1)<<"|"<<setw(30)<<left<<date<<setw(1)<<"|"<<endl;
     }
     else
-        cout<<"unpaid"<<endl;
+    {
+        Student::display();
+        cout<<"\n### FEES STATUS ###"<<endl;
+        cout<<"Monthly Fees: "<<monthlyFees<<endl;
+        cout<<"Fee Status: ";
+        if(feeStatus)
+        {
+            cout<<"paid"<<endl;
+            cout<<"payment date: "<<date<<endl;
+        }
+        else
+            cout<<"unpaid"<<endl;
+    }
+
 }
 
 void Fees::payFees()
@@ -149,6 +167,8 @@ void getClas(char*); //function to input correct class
 void banner(); //function to show program banner
 void paymentportal(); //sub menu for payment function
 void showAll(char* ); //function to show all students
+void drawLine(); //to draw line in table
+void writeHeadLine(); //to write headline of table
 
 /*----------------------------function prototypes ends----------------------------*/
 
@@ -223,6 +243,24 @@ void studentNotFoundError()
     cout<<"If error still persist contact sys admin"<<endl;
 }
 
+void drawLine()
+{
+    cout<<setw(1)<<"+"<<setfill('-')<<setw(6)<<"-";
+    cout<<setw(1)<<"+"<<setw(8)<<"-";
+    cout<<setw(1)<<"+"<<setw(20)<<"-";
+    cout<<setw(1)<<"+"<<setw(10)<<"-";
+    cout<<setw(1)<<"+"<<setw(30)<<"-";
+    cout<<setw(1)<<"+"<<endl;
+}
+
+void writeHeadLine()
+{
+    cout<<setw(1)<<"|"<<setfill(' ')<<setw(6)<<left<<"Adm No";
+    cout<<setw(1)<<"|"<<setw(8)<<left<<"Roll No";
+    cout<<setw(1)<<"|"<<setw(20)<<left<<"Name";
+    cout<<setw(1)<<"|"<<setw(10)<<left<<"Fee Status";
+    cout<<setw(1)<<"|"<<setw(30)<<left<<"Date Of Payment"<<setw(1)<<"|"<<endl;
+}
 void getMonth(char* month)
 {
     while(1)
@@ -406,14 +444,15 @@ void listPaid(char *fileName)
     ifstream file(fileName,ios::in|ios::binary);
     if(file)
     {
+        drawLine();
+        writeHeadLine();
+        drawLine();;
         while(file.read((char*)&temp,sizeof(Fees)))
         {
             if(temp.isFeesPaid())
             {
-                cout<<setw(36)<<setfill('-')<<"-"<<endl;
-                temp.display();
-                cout<<endl;
-                cout<<setw(36)<<setfill('-')<<"-"<<endl;
+                temp.display(true);
+                drawLine();
             }
         }
     }
@@ -429,14 +468,15 @@ void listUnpaid(char *fileName)
     ifstream file(fileName,ios::in|ios::binary);
     if(file)
     {
+        drawLine();
+        writeHeadLine();
+        drawLine();
         while(file.read((char*)&temp,sizeof(Fees)))
         {
             if(!temp.isFeesPaid())
             {
-                cout<<setw(36)<<setfill('-')<<"-"<<endl;
-                temp.display();
-                cout<<endl;
-                cout<<setw(36)<<setfill('-')<<"-"<<endl;
+                temp.display(true);
+                drawLine();
             }
         }
     }
@@ -485,6 +525,7 @@ void delStudent(char *fileName)
         {
             if(temp.getRollNo()==rollNo)
             {
+                temp.display();
                 cout<<"sure to delete (y/n): ";
                 cin.ignore();
                 cin.get(choice);
@@ -494,7 +535,7 @@ void delStudent(char *fileName)
                 {
                     cout<<"Exiting to main menu..."<<endl;
                     remove("database/temp.dat");
-                    break;
+                    goto main;
                 }
             }
             tempFile.write((char*)&temp,sizeof(Fees));
@@ -508,6 +549,7 @@ void delStudent(char *fileName)
     }
     else
         fileError();
+main:
     pause();
 }
 
@@ -687,8 +729,14 @@ void showAll(char* fileName)
     fstream file(fileName,ios::in|ios::binary);
     if(file)
     {
+        drawLine();
+        writeHeadLine();
+        drawLine();
         while(file.read((char*)&temp,sizeof(Fees)))
-              temp.display();
+        {
+            temp.display(true);
+            drawLine();
+        }
     }
     else
         fileError();
